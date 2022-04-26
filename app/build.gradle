@@ -1,0 +1,91 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'kotlin-android-extensions'
+}
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+android {
+    compileSdkVersion Integer.parseInt(COMPILE_SDK_VERSION)
+    buildToolsVersion BUILDTOOLS_VERSION
+
+    defaultConfig {
+        applicationId "com.dragon.router"
+        minSdkVersion Integer.parseInt(MIN_SDK_VERSION)
+        targetSdkVersion Integer.parseInt(TARGET_SDK_VERSION)
+        versionCode 1
+        versionName "1.0.0"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [
+                        ROUTER_MODULE_NAME      : project.getName(),
+                        ROUTER_MODULE_GRAPH_NAME: "nav_graph"
+                ]
+            }
+        }
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+//    repositories{
+//        flatDir {
+//            'libs'
+//        }
+//    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+//    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.3.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    if (isModule.toBoolean()) {
+        implementation project(':module-one')
+        implementation project(':module-two')
+    }
+
+    // Navigation
+    implementation "androidx.navigation:navigation-fragment-ktx:2.4.2"
+    implementation "androidx.navigation:navigation-ui-ktx:2.4.2"
+
+//    kapt 'com.github.fengpeihao.router:router-compiler:1.0.1'
+//    implementation 'com.github.fengpeihao.router:router-core:1.0.1'
+//    kapt 'com.cfxc.router:router-compiler:1.0.0'
+//    implementation 'com.cfxc.router:router-core:1.0.0'
+
+    implementation project(':common')
+    //有用
+//    kapt project(':router-compiler')
+
+    implementation "io.github.xuexixuexijpg:router-core:0.0.5"
+//    kapt files('libs/router-compiler.jar')
+    kapt (name:'router-compiler-release', ext:'aar')
+    //无用
+//    kapt "io.github.xuexixuexijpg:router-compiler:0.0.5"
+
+}

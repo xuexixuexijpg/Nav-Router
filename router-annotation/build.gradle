@@ -1,0 +1,159 @@
+apply plugin: 'java'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+configurations {
+    javadocDeps
+}
+
+task generateSourcesJar(type: Jar) {
+    archiveClassifier.set( 'sources')
+    from sourceSets.main.java.srcDirs
+}
+
+//task javadoc(type: Javadoc) {
+//    source = android.sourceSets.main.java.srcDirs
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator)) + configurations.javadocDeps
+//}
+
+javadoc {
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        links "http://docs.oracle.com/javase/8/docs/api"
+    }
+}
+
+task generateJavadoc(type: Jar, dependsOn:['javadoc']) {
+    group = 'jar'
+    archiveClassifier.set('javadoc')
+    from 'build/docs/javadoc'
+}
+
+task generateMergeJar(type: Jar, dependsOn:['assemble']){
+    group = 'jar'
+//    from(project.zipTree('build/intermediates/aar_main_jar/release/classes.jar'))
+    from(project.zipTree('build/libs/router-annotation.jar'))
+}
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+Properties properties = new Properties()
+properties.load(project.rootProject.file('maven.properties').newDataInputStream())
+
+def SDK_JAR_NAME = properties.getProperty('SDK_JAR_NAME')
+
+def GROUP_ID = properties.getProperty('GROUP_ID')
+def ARTIFACT_ID = "router-annotation"
+def POM_PACKAGING = properties.getProperty('POM_PACKAGING')
+
+def VERSION_NAME = "0.0.1"
+
+def POM_NAME = properties.getProperty('POM_NAME')
+def POM_URL = properties.getProperty('POM_URL')
+def POM_DESCRIPTION = properties.getProperty('POM_DESCRIPTION')
+
+def POM_SCM_URL = properties.getProperty('POM_SCM_URL')
+def POM_SCM_CONNECTION = properties.getProperty('POM_SCM_CONNECTION')
+def POM_SCM_DEV_CONNECTION = properties.getProperty('POM_SCM_DEV_CONNECTION')
+
+def POM_LICENCE_COMMENTS = properties.getProperty('POM_LICENCE_COMMENTS')
+def POM_LICENCE_NAME = properties.getProperty('POM_LICENCE_NAME')
+def POM_LICENCE_URL = properties.getProperty('POM_LICENCE_URL')
+def POM_LICENCE_DIST = properties.getProperty('POM_LICENCE_DIST')
+
+def POM_DEVELOPER_ID = properties.getProperty('POM_DEVELOPER_ID')
+def POM_DEVELOPER_NAME = properties.getProperty('POM_DEVELOPER_NAME')
+def POM_DEVELOPER_EMAIL = properties.getProperty('POM_DEVELOPER_EMAIL')
+def POM_DEVELOPER_URL = properties.getProperty('POM_DEVELOPER_URL')
+def POM_ISSUE_MANAGEMENT_SYSTEM = properties.getProperty('POM_ISSUE_MANAGEMENT_SYSTEM')
+def POM_ISSUE_MANAGEMENT_URL = properties.getProperty('POM_ISSUE_MANAGEMENT_URL')
+def POM_INCEPTION_YEAR = properties.getProperty('POM_INCEPTION_YEAR')
+
+configurations {
+    javadocDeps
+}
+
+def getRepositoryUsername() {
+    return hasProperty('MAVEN_USERNAME') ? MAVEN_USERNAME : ""
+}
+
+def getRepositoryPassword() {
+    return hasProperty('MAVEN_PASSWORD') ? MAVEN_PASSWORD : ""
+}
+
+def getReleaseRepositoryUrl() {
+    return "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+}
+
+def getSnapshotRepositoryUrl() {
+    return "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId GROUP_ID
+            artifactId ARTIFACT_ID
+            version VERSION_NAME
+            pom {
+                name = POM_NAME
+                description = POM_DESCRIPTION
+                url = POM_URL
+                inceptionYear = POM_INCEPTION_YEAR
+
+                scm {
+                    url = POM_SCM_URL
+                    connection = POM_SCM_CONNECTION
+                    developerConnection = POM_SCM_DEV_CONNECTION
+                }
+
+                licenses {
+                    license {
+                        name = POM_LICENCE_NAME
+                        url = POM_LICENCE_URL
+                        distribution = POM_LICENCE_DIST
+                        comments = POM_LICENCE_COMMENTS
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = POM_DEVELOPER_ID
+                        name = POM_DEVELOPER_NAME
+                        email = POM_DEVELOPER_EMAIL
+                        url = POM_DEVELOPER_URL
+                    }
+                }
+
+                issueManagement {
+                    system = POM_ISSUE_MANAGEMENT_SYSTEM
+                    url = POM_ISSUE_MANAGEMENT_URL
+                }
+            }
+            artifact generateSourcesJar //需要上传的source jar
+            artifact generateJavadoc //需要上传的java doc
+            artifact './build/libs/router-annotation.jar' //需要上传的资源jar路径或者是aar路径，这边可以填写一个生成jar的task，如makeJar方法就是一个生成jar的task
+//            artifact './build/libs/router-compiler.jar' //需要上传的资源jar路径或者是aar路径，这边可以填写一个生成jar的task，如makeJar方法就是一个生成jar的task
+//            artifact './build/libs/router-compiler-javadoc.jar'
+//            artifact './build/libs/router-compiler-sources.jar'
+        }
+    }
+    repositories {
+        maven {
+            // 指定要上传的maven仓库
+            url = VERSION_NAME.contains('SNAPSHOT') ? getSnapshotRepositoryUrl() : getReleaseRepositoryUrl()
+            //Maven仓库用户名和密码
+            credentials {
+                username getRepositoryUsername()
+                password getRepositoryPassword()
+            }
+        }
+    }
+}
+signing {
+    sign publishing.publications.maven //签名配置
+}
